@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import AdminDashboard from './AdminDashboard.jsx'
 import './App.css'
 
 const menuItems = [
@@ -82,6 +83,54 @@ const menuItems = [
 
 const formatPrice = (price) => `${new Intl.NumberFormat('ko-KR').format(price)}원`
 
+const getCurrentTimestamp = () => new Date().toISOString()
+
+const initialInventory = [
+  { id: 'americano-ice', name: '아메리카노 (ICE)', art: 'iced', quantity: 10 },
+  { id: 'americano-hot', name: '아메리카노 (HOT)', art: 'hot', quantity: 10 },
+  { id: 'cafe-latte', name: '카페라떼', art: 'latte', quantity: 10 },
+  { id: 'vanilla-latte', name: '바닐라 라떼', art: 'vanilla', quantity: 4 },
+  { id: 'cold-brew', name: '콜드브루', art: 'cold', quantity: 0 },
+  { id: 'cappuccino', name: '카푸치노', art: 'cappuccino', quantity: 7 },
+]
+
+const initialOrders = [
+  {
+    id: '1042',
+    createdAt: '2026-10-15T10:20:00',
+    status: 'received',
+    items: [{ name: '아메리카노 (ICE)', quantity: 1 }],
+    total: 4000,
+  },
+  {
+    id: '1041',
+    createdAt: '2026-10-15T10:11:00',
+    status: 'preparing',
+    items: [
+      { name: '카페라떼', quantity: 2, options: '샷 추가' },
+      { name: '콜드브루', quantity: 1 },
+    ],
+    total: 15000,
+  },
+  {
+    id: '1040',
+    createdAt: '2026-10-15T09:59:00',
+    status: 'received',
+    items: [
+      { name: '아메리카노 (HOT)', quantity: 1 },
+      { name: '바닐라 라떼', quantity: 1 },
+    ],
+    total: 9500,
+  },
+  {
+    id: '1039',
+    createdAt: '2026-10-15T09:45:00',
+    status: 'completed',
+    items: [{ name: '카푸치노', quantity: 2 }],
+    total: 10000,
+  },
+]
+
 function CoffeeArtwork({ art, id }) {
   return (
     <svg className={`coffee-art coffee-art--${art}`} viewBox="0 0 320 220" aria-hidden="true">
@@ -143,9 +192,23 @@ function CartIcon() {
 }
 
 function App() {
+  const [activePage, setActivePage] = useState(() =>
+    window.location.hash === '#admin' ? 'admin' : 'order',
+  )
   const [selectedOptions, setSelectedOptions] = useState({})
   const [cart, setCart] = useState([])
   const [notice, setNotice] = useState(null)
+  const [inventory, setInventory] = useState(initialInventory)
+  const [orders, setOrders] = useState(initialOrders)
+
+  useEffect(() => {
+    const syncPageWithHash = () => {
+      setActivePage(window.location.hash === '#admin' ? 'admin' : 'order')
+    }
+
+    window.addEventListener('hashchange', syncPageWithHash)
+    return () => window.removeEventListener('hashchange', syncPageWithHash)
+  }, [])
 
   const cartDetails = useMemo(
     () =>
@@ -190,9 +253,45 @@ function App() {
     setNotice({ type: 'success', text: `${menu.name}을(를) 장바구니에 담았어요.` })
   }
 
+  const adjustStock = (menuId, adjustment) => {
+    setInventory((current) =>
+      current.map((item) =>
+        item.id === menuId
+          ? { ...item, quantity: Math.max(0, item.quantity + adjustment) }
+          : item,
+      ),
+    )
+  }
+
+  const startOrder = (orderId) => {
+    setOrders((current) =>
+      current.map((order) =>
+        order.id === orderId && order.status === 'received'
+          ? { ...order, status: 'preparing' }
+          : order,
+      ),
+    )
+  }
+
   const placeOrder = () => {
     if (cart.length === 0) return
 
+    const nextOrderId = String(
+      Math.max(0, ...orders.map((order) => Number(order.id))) + 1,
+    )
+    const newOrder = {
+      id: nextOrderId,
+      createdAt: getCurrentTimestamp(),
+      status: 'received',
+      items: cartDetails.map((entry) => ({
+        name: entry.menu.name,
+        quantity: entry.quantity,
+        options: entry.selected.map((option) => option.name).join(' · '),
+      })),
+      total,
+    }
+
+    setOrders((current) => [newOrder, ...current])
     setCart([])
     setSelectedOptions({})
     setNotice({ type: 'success', text: '주문이 접수됐어요. 맛있게 준비해 드릴게요!' })
@@ -212,18 +311,42 @@ function App() {
         </a>
 
         <nav className="main-nav" aria-label="주요 메뉴">
-          <a className="nav-link nav-link--active" href="#menu" aria-current="page">주문하기</a>
-          <a className="nav-link" href="#admin">관리자</a>
+          <a
+            className={`nav-link${activePage === 'order' ? ' nav-link--active' : ''}`}
+            href="#menu"
+            aria-current={activePage === 'order' ? 'page' : undefined}
+          >
+            주문하기
+          </a>
+          <a
+            className={`nav-link${activePage === 'admin' ? ' nav-link--active' : ''}`}
+            href="#admin"
+            aria-current={activePage === 'admin' ? 'page' : undefined}
+          >
+            관리자
+          </a>
         </nav>
 
-        <a className="header-cart" href="#cart" aria-label={`장바구니, ${itemCount}개 항목`}>
-          <CartIcon />
-          <span>장바구니</span>
-          <span className="header-cart-count">{itemCount}</span>
-        </a>
+        {activePage === 'order' ? (
+          <a className="header-cart" href="#cart" aria-label={`장바구니, ${itemCount}개 항목`}>
+            <CartIcon />
+            <span>장바구니</span>
+            <span className="header-cart-count">{itemCount}</span>
+          </a>
+        ) : (
+          <span className="admin-header-label">매장 관리</span>
+        )}
       </header>
 
-      <main>
+      {activePage === 'admin' ? (
+        <AdminDashboard
+          inventory={inventory}
+          orders={orders}
+          onAdjustStock={adjustStock}
+          onStartOrder={startOrder}
+        />
+      ) : (
+        <main>
         <section className="intro" aria-labelledby="page-title">
           <div className="intro-copy">
             <p className="eyebrow"><span className="eyebrow-dot" /> 오늘도, 커피 한 잔의 여유</p>
@@ -362,7 +485,8 @@ function App() {
             <p className="checkout-caption">주문 접수 후 매장에서 준비해 드려요</p>
           </aside>
         </section>
-      </main>
+        </main>
+      )}
 
       <footer className="site-footer">
         <a className="footer-brand" href="#">COZY<span>.</span></a>

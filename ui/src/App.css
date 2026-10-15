@@ -155,6 +155,12 @@
   font-weight: 700;
 }
 
+.admin-header-label {
+  color: rgba(255, 255, 255, .82);
+  font-size: 11px;
+  font-weight: 500;
+}
+
 .intro {
   position: relative;
   display: flex;
@@ -1070,6 +1076,10 @@
     min-width: 17px;
     height: 17px;
     padding: 0 4px;
+    font-size: 9px;
+  }
+
+  .admin-header-label {
     font-size: 9px;
   }
 
