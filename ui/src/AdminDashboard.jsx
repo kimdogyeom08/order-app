@@ -114,12 +114,8 @@ function AdminDashboard({ inventory, orders, onAdjustStock, onStartOrder }) {
             const statusLabel = item.quantity === 0 ? '품절' : item.quantity < 5 ? '주의' : '정상'
 
             return (
-              <article className="inventory-card" key={item.id}>
-                <div className={`inventory-art inventory-art--${item.art}`} aria-hidden="true">
-                  <span />
-                  <i />
-                </div>
-                <div className="inventory-card-body">
+            <article className="inventory-card" key={item.id}>
+              <div className="inventory-card-body">
                   <div className="inventory-stock-row">
                     <h3>{item.name}</h3>
                     <p className="inventory-count"><strong>{item.quantity}</strong><span>개</span></p>

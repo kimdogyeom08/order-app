@@ -329,7 +329,6 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 12px;
   padding: 13px;
   background: #fff;
   border: 1px solid #e9edf3;
@@ -341,101 +340,6 @@
 .inventory-card:hover {
   border-color: #d4e1f6;
   box-shadow: 0 8px 20px rgba(39, 57, 84, .06);
-}
-
-.inventory-art {
-  position: relative;
-  display: grid;
-  width: 61px;
-  height: 64px;
-  flex: 0 0 61px;
-  overflow: hidden;
-  place-items: center;
-  background: linear-gradient(140deg, #edf5fa, #dfebf0);
-  border-radius: 9px;
-}
-
-.inventory-art::before {
-  position: absolute;
-  right: -10px;
-  bottom: -18px;
-  width: 55px;
-  height: 42px;
-  background: rgba(255, 255, 255, .4);
-  border-radius: 50%;
-  content: '';
-}
-
-.inventory-art > span {
-  position: relative;
-  z-index: 1;
-  width: 25px;
-  height: 32px;
-  background: linear-gradient(90deg, #fbfdff, #dfeaf1);
-  border: 1px solid rgba(120, 146, 163, .15);
-  border-radius: 2px 2px 8px 8px;
-  box-shadow: 0 4px 6px rgba(49, 69, 83, .14);
-}
-
-.inventory-art > span::before {
-  position: absolute;
-  top: 5px;
-  left: -2px;
-  width: 27px;
-  height: 5px;
-  background: #563a2a;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  content: '';
-}
-
-.inventory-art > i {
-  position: absolute;
-  z-index: 2;
-  top: 11px;
-  left: 28px;
-  width: 2px;
-  height: 12px;
-  background: #f8fcff;
-  transform: rotate(16deg);
-}
-
-.inventory-art--hot,
-.inventory-art--cappuccino {
-  background: linear-gradient(140deg, #f5eee5, #e9dbcb);
-}
-
-.inventory-art--latte,
-.inventory-art--vanilla {
-  background: linear-gradient(140deg, #f6eee4, #efdfd0);
-}
-
-.inventory-art--cold {
-  background: linear-gradient(140deg, #eaf3f5, #dcebed);
-}
-
-.inventory-art--hot > span,
-.inventory-art--latte > span,
-.inventory-art--vanilla > span,
-.inventory-art--cappuccino > span {
-  width: 30px;
-  height: 26px;
-  border-radius: 2px 2px 9px 9px;
-}
-
-.inventory-art--hot > span::before,
-.inventory-art--latte > span::before,
-.inventory-art--vanilla > span::before,
-.inventory-art--cappuccino > span::before {
-  background: #81553b;
-}
-
-.inventory-art--iced > i,
-.inventory-art--cold > i {
-  top: 6px;
-  left: 33px;
-  height: 18px;
-  transform: rotate(21deg);
 }
 
 .inventory-card-body {
@@ -927,15 +831,8 @@
   }
 
   .inventory-card {
-    gap: 11px;
     padding: 9px;
     border-radius: 10px;
-  }
-
-  .inventory-art {
-    width: 54px;
-    height: 56px;
-    flex-basis: 54px;
   }
 
   .inventory-stock-row h3 {
