@@ -8,7 +8,13 @@ const port = Number(process.env.PORT ?? 3000)
 try {
   await initializeDatabase()
 } catch (error) {
-  console.error('Database initialization failed:', error.code ?? 'unknown error')
+  const code = error.code ?? 'unknown error'
+  const advice = code === '28000'
+    ? ' Check the Render Internal Database URL and TLS connection settings.'
+    : code === '28P01'
+      ? ' Check the database username and password in DATABASE_URL.'
+      : ''
+  console.error(`Database initialization failed: ${code}.${advice}`)
   process.exit(1)
 }
 

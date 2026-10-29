@@ -14,7 +14,7 @@ cd server
 npm install
 ```
 
-Configure the existing `.env` file with either all of `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`, or a `DATABASE_URL` PostgreSQL connection string. When all five `PG*` settings are present, they take precedence over `DATABASE_URL`. The `.env` file is ignored by Git and must not be committed.
+Configure the existing `.env` file with either all of `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`, or a `DATABASE_URL` PostgreSQL connection string. Locally, complete `PG*` settings take precedence over `DATABASE_URL`. On Render, `DATABASE_URL` takes precedence and TLS is enabled for Render Postgres's self-signed internal certificate. Use the database's Internal Database URL for a service in the same region. The `.env` file is ignored by Git and must not be committed.
 
 The server creates the required tables and inserts the initial coffee menu and options on startup. Existing menu stock and orders are preserved across restarts.
 
