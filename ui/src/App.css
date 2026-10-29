@@ -555,6 +555,14 @@
   height: 100%;
 }
 
+.menu-photo {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .coffee-art--iced {
   transform: translateY(3px) rotate(-3deg);
 }

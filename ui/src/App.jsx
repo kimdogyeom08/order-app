@@ -286,7 +286,11 @@ function App() {
               return (
                 <article className="menu-card" key={menu.id}>
                   <div className={`menu-art menu-art--${presentation.art}`}>
-                    <CoffeeArtwork art={presentation.art} id={menu.id} />
+                    {menu.imageUrl ? (
+                      <img className="menu-photo" src={menu.imageUrl} alt={menu.name} />
+                    ) : (
+                      <CoffeeArtwork art={presentation.art} id={menu.id} />
+                    )}
                     {presentation.badge && <span className="menu-badge">{presentation.badge}</span>}
                   </div>
                   <div className="menu-card-content">

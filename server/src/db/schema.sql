@@ -70,6 +70,17 @@ VALUES
   ('카푸치노', '풍성한 우유 거품과 진한 에스프레소', 5000, 7)
 ON CONFLICT (name) DO NOTHING;
 
+UPDATE menus
+SET image_url = CASE
+  WHEN name = '아메리카노 (ICE)' THEN '/차가운.jpeg'
+  WHEN name = '아메리카노 (HOT)' THEN '/아메리카노.jpeg'
+  WHEN name = '카페라떼' THEN '/라떼.jpeg'
+  WHEN name = '바닐라 라떼' THEN '/바닐라라떼.jpeg'
+  WHEN name = '콜드브루' THEN '/콜드브루.jpeg'
+  WHEN name = '카푸치노' THEN '/카푸치노.jpeg'
+END
+WHERE name IN ('아메리카노 (ICE)', '아메리카노 (HOT)', '카페라떼', '바닐라 라떼', '콜드브루', '카푸치노');
+
 INSERT INTO options (menu_id, name, price)
 SELECT menus.id, seed.name, seed.price
 FROM menus
