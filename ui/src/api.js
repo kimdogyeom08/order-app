@@ -1,10 +1,12 @@
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
+
 export async function apiRequest(path, options = {}) {
   const headers = new Headers(options.headers)
   if (options.body && !headers.has('content-type')) {
     headers.set('content-type', 'application/json')
   }
 
-  const response = await fetch(`/api${path}`, {
+  const response = await fetch(`${apiBaseUrl}/api${path}`, {
     ...options,
     headers,
   })
