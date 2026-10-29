@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { apiRequest } from './api.js'
 import './AdminDashboard.css'
 
 const formatPrice = (price) => `${new Intl.NumberFormat('ko-KR').format(price)}원`
@@ -15,6 +17,20 @@ const statusLabels = {
   received: '주문 접수',
   preparing: '제조 중',
   completed: '제조 완료',
+}
+
+function mapOrder(order) {
+  return {
+    id: String(order.orderId),
+    createdAt: order.orderedAt,
+    status: order.status,
+    total: order.totalAmount,
+    items: order.items.map((item) => ({
+      name: item.menuName,
+      quantity: item.quantity,
+      options: item.options.map((option) => option.name).join(' · '),
+    })),
+  }
 }
 
 function DashboardIcon({ type }) {
@@ -50,7 +66,88 @@ function DashboardIcon({ type }) {
   )
 }
 
-function AdminDashboard({ inventory, orders, onAdjustStock, onStartOrder }) {
+function AdminDashboard() {
+  const [inventory, setInventory] = useState([])
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [reload, setReload] = useState(0)
+  const [busyActions, setBusyActions] = useState({})
+  const [notice, setNotice] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    Promise.all([
+      apiRequest('/admin/menus'),
+      apiRequest('/admin/orders'),
+    ])
+      .then(([menuData, orderData]) => {
+        if (cancelled) return
+        setInventory(menuData.items.map((menu) => ({ ...menu, quantity: menu.stockQuantity })))
+        setOrders(orderData.items.map(mapOrder))
+      })
+      .catch((error) => {
+        if (!cancelled) setLoadError(error.message)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [reload])
+
+  const reloadAdminData = () => {
+    setLoading(true)
+    setLoadError('')
+    setReload((current) => current + 1)
+  }
+
+  const adjustStock = async (menuId, adjustment) => {
+    const actionKey = `stock-${menuId}`
+    setBusyActions((current) => ({ ...current, [actionKey]: true }))
+    setNotice(null)
+
+    try {
+      const menu = await apiRequest(`/admin/menus/${menuId}/stock`, {
+        method: 'PATCH',
+        body: JSON.stringify({ adjustment }),
+      })
+      setInventory((current) => current.map((item) => (
+        item.id === menu.id ? { ...item, quantity: menu.stockQuantity } : item
+      )))
+      setNotice({ type: 'success', text: `${menu.name} 재고를 변경했습니다.` })
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message })
+    } finally {
+      setBusyActions((current) => ({ ...current, [actionKey]: false }))
+    }
+  }
+
+  const advanceOrder = async (order) => {
+    const actionKey = `order-${order.id}`
+    setBusyActions((current) => ({ ...current, [actionKey]: true }))
+    setNotice(null)
+
+    try {
+      const updated = await apiRequest(`/admin/orders/${order.id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'preparing' }),
+      })
+      setOrders((current) => current.map((item) => (
+        item.id === String(updated.orderId) ? mapOrder(updated) : item
+      )))
+      setNotice({ type: 'success', text: `주문 ${order.id}을(를) 접수했습니다.` })
+    } catch (error) {
+      if (error.status === 409) reloadAdminData()
+      setNotice({ type: 'error', text: error.message })
+    } finally {
+      setBusyActions((current) => ({ ...current, [actionKey]: false }))
+    }
+  }
+
   const summary = [
     { label: '총 주문', value: orders.length, icon: 'orders', tone: 'blue' },
     { label: '주문 접수', value: orders.filter((order) => order.status === 'received').length, icon: 'received', tone: 'amber' },
@@ -84,6 +181,19 @@ function AdminDashboard({ inventory, orders, onAdjustStock, onStartOrder }) {
           </div>
           <span className="admin-live"><span /> 실시간 현황</span>
         </div>
+        {notice && (
+          <p className={`order-notice order-notice--${notice.type}`} role="status" aria-live="polite">
+            <span aria-hidden="true">{notice.type === 'success' ? '✓' : '!'}</span>{notice.text}
+          </p>
+        )}
+        {loadError && (
+          <div className="admin-empty-state" role="alert">
+            <h3>관리 데이터를 불러오지 못했습니다.</h3>
+            <p>{loadError}</p>
+            <button type="button" onClick={reloadAdminData}>다시 시도</button>
+          </div>
+        )}
+        {loading && <p className="section-description" role="status">관리 데이터를 불러오는 중입니다.</p>}
         <div className="summary-grid">
           {summary.map((item) => (
             <article className="summary-card" key={item.label}>
@@ -128,8 +238,8 @@ function AdminDashboard({ inventory, orders, onAdjustStock, onStartOrder }) {
                       className="stock-button stock-button--decrease"
                       type="button"
                       aria-label={`${item.name} 재고 1개 감소`}
-                      disabled={item.quantity === 0}
-                      onClick={() => onAdjustStock(item.id, -1)}
+                      disabled={item.quantity === 0 || busyActions[`stock-${item.id}`] || loading}
+                      onClick={() => adjustStock(item.id, -1)}
                     >
                       −
                     </button>
@@ -137,7 +247,8 @@ function AdminDashboard({ inventory, orders, onAdjustStock, onStartOrder }) {
                       className="stock-button stock-button--increase"
                       type="button"
                       aria-label={`${item.name} 재고 1개 증가`}
-                      onClick={() => onAdjustStock(item.id, 1)}
+                      disabled={busyActions[`stock-${item.id}`] || loading}
+                      onClick={() => adjustStock(item.id, 1)}
                     >
                       +
                     </button>
@@ -158,7 +269,7 @@ function AdminDashboard({ inventory, orders, onAdjustStock, onStartOrder }) {
           <span className="section-description">{orders.length}건의 주문</span>
         </div>
 
-        {orders.length > 0 ? (
+        {!loading && orders.length > 0 ? (
           <div className="orders-list">
             {orders.map((order) => (
               <article className="order-card" key={order.id}>
@@ -193,8 +304,13 @@ function AdminDashboard({ inventory, orders, onAdjustStock, onStartOrder }) {
                 </div>
                 <div className="order-card-action">
                   {order.status === 'received' ? (
-                    <button className="start-order-button" type="button" onClick={() => onStartOrder(order.id)}>
-                      <span aria-hidden="true">▶</span> 제조 시작
+                    <button
+                      className="start-order-button"
+                      type="button"
+                      disabled={busyActions[`order-${order.id}`] || loading}
+                      onClick={() => advanceOrder(order)}
+                    >
+                      <span aria-hidden="true">▶</span> 주문 접수
                     </button>
                   ) : (
                     <span className="order-action-note">
@@ -205,7 +321,7 @@ function AdminDashboard({ inventory, orders, onAdjustStock, onStartOrder }) {
               </article>
             ))}
           </div>
-        ) : (
+        ) : !loading && !loadError ? (
           <div className="admin-empty-state">
             <span className="admin-empty-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4" /></svg>
@@ -213,7 +329,7 @@ function AdminDashboard({ inventory, orders, onAdjustStock, onStartOrder }) {
             <h3>아직 접수된 주문이 없어요</h3>
             <p>새로운 주문이 들어오면 이곳에 표시됩니다.</p>
           </div>
-        )}
+        ) : null}
       </section>
     </main>
   )

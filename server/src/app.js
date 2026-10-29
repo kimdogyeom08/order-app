@@ -1,6 +1,7 @@
 import cors from 'cors'
 import express from 'express'
 import { checkDatabaseConnection } from './db/pool.js'
+import apiRouter from './routes/api.js'
 
 const app = express()
 const allowedOrigins = (
@@ -32,6 +33,8 @@ app.get('/api/health/db', async (_request, response) => {
   }
 })
 
+app.use('/api', apiRouter)
+
 app.use((_request, response) => {
   response.status(404).json({
     error: {
@@ -47,6 +50,15 @@ app.use((error, _request, response, _next) => {
       error: {
         code: 'INVALID_JSON',
         message: '요청 본문이 올바른 JSON 형식이 아닙니다.',
+      },
+    })
+  }
+
+  if (Number.isInteger(error.status) && error.code && error.message) {
+    return response.status(error.status).json({
+      error: {
+        code: error.code,
+        message: error.message,
       },
     })
   }

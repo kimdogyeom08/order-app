@@ -1,8 +1,17 @@
 import 'dotenv/config'
 import app from './app.js'
+import { initializeDatabase } from './db/initialize.js'
 import { pool } from './db/pool.js'
 
 const port = Number(process.env.PORT ?? 3000)
+
+try {
+  await initializeDatabase()
+} catch (error) {
+  console.error('Database initialization failed:', error.code ?? 'unknown error')
+  process.exit(1)
+}
+
 const server = app.listen(port, () => {
   console.log(`COZY API server listening on port ${port}`)
 })

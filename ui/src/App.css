@@ -455,6 +455,34 @@
   gap: 19px;
 }
 
+.menu-feedback {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 28px 16px;
+  color: #65738a;
+  background: #fff;
+  border: 1px solid #e9edf2;
+  border-radius: 12px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.menu-feedback p {
+  margin: 0 0 12px;
+}
+
+.menu-feedback button,
+.admin-empty-state button {
+  min-height: 36px;
+  padding: 0 14px;
+  color: #fff;
+  background: var(--blue);
+  border: 0;
+  border-radius: 7px;
+  font: inherit;
+  cursor: pointer;
+}
+
 .menu-card {
   min-width: 0;
   overflow: hidden;
@@ -784,6 +812,11 @@
   background: #edf8f2;
 }
 
+.order-notice--error {
+  color: #9b3f3f;
+  background: #fff0ef;
+}
+
 .order-notice > span {
   display: grid;
   width: 16px;
@@ -792,6 +825,10 @@
   background: #d5f0e0;
   border-radius: 50%;
   font-size: 10px;
+}
+
+.order-notice--error > span {
+  background: #f9d8d5;
 }
 
 .cart-items {

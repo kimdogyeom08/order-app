@@ -1,135 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import AdminDashboard from './AdminDashboard.jsx'
+import { apiRequest } from './api.js'
 import './App.css'
 
-const menuItems = [
-  {
-    id: 'americano-ice',
-    name: '아메리카노 (ICE)',
-    englishName: 'Iced Americano',
-    description: '산뜻한 산미와 깔끔한 여운의 시그니처 블렌드',
-    price: 4000,
-    art: 'iced',
-    badge: 'BEST',
-    options: [
-      { id: 'shot', name: '샷 추가', price: 500 },
-      { id: 'syrup', name: '시럽 추가', price: 0 },
-    ],
-  },
-  {
-    id: 'americano-hot',
-    name: '아메리카노 (HOT)',
-    englishName: 'Hot Americano',
-    description: '고소한 원두의 풍미를 따뜻하게 즐겨보세요',
-    price: 4000,
-    art: 'hot',
-    options: [
-      { id: 'shot', name: '샷 추가', price: 500 },
-      { id: 'syrup', name: '시럽 추가', price: 0 },
-    ],
-  },
-  {
-    id: 'cafe-latte',
-    name: '카페라떼',
-    englishName: 'Cafe Latte',
-    description: '에스프레소와 부드러운 우유의 밸런스',
-    price: 5000,
-    art: 'latte',
-    badge: 'POPULAR',
-    options: [
-      { id: 'shot', name: '샷 추가', price: 500 },
-      { id: 'oat', name: '오트밀크 변경', price: 700 },
-      { id: 'syrup', name: '시럽 추가', price: 0 },
-    ],
-  },
-  {
-    id: 'vanilla-latte',
-    name: '바닐라 라떼',
-    englishName: 'Vanilla Latte',
-    description: '은은한 바닐라 향이 더해진 달콤한 라떼',
-    price: 5500,
-    art: 'vanilla',
-    options: [
-      { id: 'shot', name: '샷 추가', price: 500 },
-      { id: 'oat', name: '오트밀크 변경', price: 700 },
-    ],
-  },
-  {
-    id: 'cold-brew',
-    name: '콜드브루',
-    englishName: 'Cold Brew',
-    description: '오랜 시간 차갑게 추출한 깊고 부드러운 커피',
-    price: 4800,
-    art: 'cold',
-    badge: 'SLOW BREW',
-    options: [
-      { id: 'shot', name: '샷 추가', price: 500 },
-      { id: 'syrup', name: '시럽 추가', price: 0 },
-    ],
-  },
-  {
-    id: 'cappuccino',
-    name: '카푸치노',
-    englishName: 'Cappuccino',
-    description: '풍성한 우유 거품과 진한 에스프레소',
-    price: 5000,
-    art: 'cappuccino',
-    options: [
-      { id: 'shot', name: '샷 추가', price: 500 },
-      { id: 'syrup', name: '시럽 추가', price: 0 },
-    ],
-  },
-]
+const menuPresentation = {
+  '아메리카노 (ICE)': { englishName: 'Iced Americano', art: 'iced', badge: 'BEST' },
+  '아메리카노 (HOT)': { englishName: 'Hot Americano', art: 'hot' },
+  카페라떼: { englishName: 'Cafe Latte', art: 'latte', badge: 'POPULAR' },
+  '바닐라 라떼': { englishName: 'Vanilla Latte', art: 'vanilla' },
+  콜드브루: { englishName: 'Cold Brew', art: 'cold', badge: 'SLOW BREW' },
+  카푸치노: { englishName: 'Cappuccino', art: 'cappuccino' },
+}
 
 const formatPrice = (price) => `${new Intl.NumberFormat('ko-KR').format(price)}원`
-
-const getCurrentTimestamp = () => new Date().toISOString()
-
-const initialInventory = [
-  { id: 'americano-ice', name: '아메리카노 (ICE)', art: 'iced', quantity: 10 },
-  { id: 'americano-hot', name: '아메리카노 (HOT)', art: 'hot', quantity: 10 },
-  { id: 'cafe-latte', name: '카페라떼', art: 'latte', quantity: 10 },
-  { id: 'vanilla-latte', name: '바닐라 라떼', art: 'vanilla', quantity: 4 },
-  { id: 'cold-brew', name: '콜드브루', art: 'cold', quantity: 0 },
-  { id: 'cappuccino', name: '카푸치노', art: 'cappuccino', quantity: 7 },
-]
-
-const initialOrders = [
-  {
-    id: '1042',
-    createdAt: '2026-10-15T10:20:00',
-    status: 'received',
-    items: [{ name: '아메리카노 (ICE)', quantity: 1 }],
-    total: 4000,
-  },
-  {
-    id: '1041',
-    createdAt: '2026-10-15T10:11:00',
-    status: 'preparing',
-    items: [
-      { name: '카페라떼', quantity: 2, options: '샷 추가' },
-      { name: '콜드브루', quantity: 1 },
-    ],
-    total: 15000,
-  },
-  {
-    id: '1040',
-    createdAt: '2026-10-15T09:59:00',
-    status: 'received',
-    items: [
-      { name: '아메리카노 (HOT)', quantity: 1 },
-      { name: '바닐라 라떼', quantity: 1 },
-    ],
-    total: 9500,
-  },
-  {
-    id: '1039',
-    createdAt: '2026-10-15T09:45:00',
-    status: 'completed',
-    items: [{ name: '카푸치노', quantity: 2 }],
-    total: 10000,
-  },
-]
 
 function CoffeeArtwork({ art, id }) {
   return (
@@ -195,11 +78,34 @@ function App() {
   const [activePage, setActivePage] = useState(() =>
     window.location.hash === '#admin' ? 'admin' : 'order',
   )
+  const [menuItems, setMenuItems] = useState([])
+  const [menuLoading, setMenuLoading] = useState(true)
+  const [menuError, setMenuError] = useState('')
+  const [menuReload, setMenuReload] = useState(0)
   const [selectedOptions, setSelectedOptions] = useState({})
   const [cart, setCart] = useState([])
   const [notice, setNotice] = useState(null)
-  const [inventory, setInventory] = useState(initialInventory)
-  const [orders, setOrders] = useState(initialOrders)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const orderRequestKey = useRef(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    apiRequest('/menus')
+      .then((data) => {
+        if (!cancelled) setMenuItems(data.items)
+      })
+      .catch((error) => {
+        if (!cancelled) setMenuError(error.message)
+      })
+      .finally(() => {
+        if (!cancelled) setMenuLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [menuReload])
 
   useEffect(() => {
     const syncPageWithHash = () => {
@@ -210,17 +116,14 @@ function App() {
     return () => window.removeEventListener('hashchange', syncPageWithHash)
   }, [])
 
-  const cartDetails = useMemo(
-    () =>
-      cart.map((entry) => {
-        const menu = menuItems.find((item) => item.id === entry.menuId)
-        const selected = menu.options.filter((option) => entry.optionIds.includes(option.id))
-        const unitPrice = menu.price + selected.reduce((sum, option) => sum + option.price, 0)
+  const cartDetails = cart.map((entry) => {
+    const menu = menuItems.find((item) => item.id === entry.menuId)
+    if (!menu) return null
+    const selected = menu.options.filter((option) => entry.optionIds.includes(option.id))
+    const unitPrice = menu.price + selected.reduce((sum, option) => sum + option.price, 0)
 
-        return { ...entry, menu, selected, unitPrice, lineTotal: unitPrice * entry.quantity }
-      }),
-    [cart],
-  )
+    return { ...entry, menu, selected, unitPrice, lineTotal: unitPrice * entry.quantity }
+  }).filter(Boolean)
 
   const total = cartDetails.reduce((sum, entry) => sum + entry.lineTotal, 0)
   const itemCount = cartDetails.reduce((sum, entry) => sum + entry.quantity, 0)
@@ -236,9 +139,16 @@ function App() {
     })
   }
 
+  const retryMenus = () => {
+    setMenuLoading(true)
+    setMenuError('')
+    setMenuReload((current) => current + 1)
+  }
+
   const addToCart = (menu) => {
     const optionIds = [...(selectedOptions[menu.id] ?? [])].sort()
     const key = `${menu.id}:${optionIds.join(',')}`
+    orderRequestKey.current = null
 
     setCart((current) => {
       const existing = current.find((entry) => entry.key === key)
@@ -253,48 +163,30 @@ function App() {
     setNotice({ type: 'success', text: `${menu.name}을(를) 장바구니에 담았어요.` })
   }
 
-  const adjustStock = (menuId, adjustment) => {
-    setInventory((current) =>
-      current.map((item) =>
-        item.id === menuId
-          ? { ...item, quantity: Math.max(0, item.quantity + adjustment) }
-          : item,
-      ),
-    )
-  }
+  const placeOrder = async () => {
+    if (cart.length === 0 || isSubmitting) return
 
-  const startOrder = (orderId) => {
-    setOrders((current) =>
-      current.map((order) =>
-        order.id === orderId && order.status === 'received'
-          ? { ...order, status: 'preparing' }
-          : order,
-      ),
-    )
-  }
+    if (!orderRequestKey.current) orderRequestKey.current = crypto.randomUUID()
+    setIsSubmitting(true)
+    setNotice(null)
 
-  const placeOrder = () => {
-    if (cart.length === 0) return
-
-    const nextOrderId = String(
-      Math.max(0, ...orders.map((order) => Number(order.id))) + 1,
-    )
-    const newOrder = {
-      id: nextOrderId,
-      createdAt: getCurrentTimestamp(),
-      status: 'received',
-      items: cartDetails.map((entry) => ({
-        name: entry.menu.name,
-        quantity: entry.quantity,
-        options: entry.selected.map((option) => option.name).join(' · '),
-      })),
-      total,
+    try {
+      await apiRequest('/orders', {
+        method: 'POST',
+        headers: { 'Idempotency-Key': orderRequestKey.current },
+        body: JSON.stringify({
+          items: cart.map(({ menuId, quantity, optionIds }) => ({ menuId, quantity, optionIds })),
+        }),
+      })
+      setCart([])
+      setSelectedOptions({})
+      orderRequestKey.current = null
+      setNotice({ type: 'success', text: '주문이 접수됐어요. 맛있게 준비해 드릴게요!' })
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message })
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setOrders((current) => [newOrder, ...current])
-    setCart([])
-    setSelectedOptions({})
-    setNotice({ type: 'success', text: '주문이 접수됐어요. 맛있게 준비해 드릴게요!' })
   }
 
   return (
@@ -339,12 +231,7 @@ function App() {
       </header>
 
       {activePage === 'admin' ? (
-        <AdminDashboard
-          inventory={inventory}
-          orders={orders}
-          onAdjustStock={adjustStock}
-          onStartOrder={startOrder}
-        />
+        <AdminDashboard />
       ) : (
         <main>
         <section className="intro" aria-labelledby="page-title">
@@ -380,26 +267,39 @@ function App() {
           </div>
 
           <div className="menu-grid">
-            {menuItems.map((menu) => {
+            {menuLoading ? (
+              <p className="menu-feedback" role="status">메뉴를 불러오는 중입니다.</p>
+            ) : menuError ? (
+              <div className="menu-feedback" role="alert">
+                <p>메뉴를 불러오지 못했습니다. {menuError}</p>
+                <button type="button" onClick={retryMenus}>다시 시도</button>
+              </div>
+            ) : menuItems.length === 0 ? (
+              <p className="menu-feedback" role="status">현재 주문 가능한 메뉴가 없습니다.</p>
+            ) : menuItems.map((menu) => {
+              const presentation = menuPresentation[menu.name] ?? {
+                englishName: menu.name,
+                art: 'latte',
+              }
               const chosenOptions = selectedOptions[menu.id] ?? []
 
               return (
                 <article className="menu-card" key={menu.id}>
-                  <div className={`menu-art menu-art--${menu.art}`}>
-                    <CoffeeArtwork art={menu.art} id={menu.id} />
-                    {menu.badge && <span className="menu-badge">{menu.badge}</span>}
+                  <div className={`menu-art menu-art--${presentation.art}`}>
+                    <CoffeeArtwork art={presentation.art} id={menu.id} />
+                    {presentation.badge && <span className="menu-badge">{presentation.badge}</span>}
                   </div>
                   <div className="menu-card-content">
                     <div className="menu-name-row">
                       <div>
-                        <p className="menu-english-name">{menu.englishName}</p>
+                        <p className="menu-english-name">{presentation.englishName}</p>
                         <h3>{menu.name}</h3>
                       </div>
                       <span className="menu-price">{formatPrice(menu.price)}</span>
                     </div>
                     <p className="menu-description">{menu.description}</p>
 
-                    <fieldset className="option-list">
+                    <fieldset className="option-list" disabled={isSubmitting}>
                       <legend>옵션 선택</legend>
                       {menu.options.map((option) => (
                         <label className="option-row" key={option.id}>
@@ -417,7 +317,7 @@ function App() {
                       ))}
                     </fieldset>
 
-                    <button className="add-button" type="button" onClick={() => addToCart(menu)}>
+                    <button className="add-button" type="button" disabled={isSubmitting} onClick={() => addToCart(menu)}>
                       <span className="add-icon" aria-hidden="true">+</span>
                       장바구니 담기
                     </button>
@@ -440,7 +340,7 @@ function App() {
 
             {notice && (
               <p className={`order-notice order-notice--${notice.type}`} role="status" aria-live="polite">
-                <span aria-hidden="true">✓</span>{notice.text}
+                <span aria-hidden="true">{notice.type === 'success' ? '✓' : '!'}</span>{notice.text}
               </p>
             )}
 
@@ -479,8 +379,8 @@ function App() {
               <span>총 금액</span>
               <strong>{formatPrice(total)}</strong>
             </div>
-            <button className="checkout-button" type="button" disabled={itemCount === 0} onClick={placeOrder}>
-              주문하기 <span aria-hidden="true">→</span>
+            <button className="checkout-button" type="button" disabled={itemCount === 0 || isSubmitting} onClick={placeOrder}>
+              {isSubmitting ? '주문 접수 중' : '주문하기'} <span aria-hidden="true">→</span>
             </button>
             <p className="checkout-caption">주문 접수 후 매장에서 준비해 드려요</p>
           </aside>

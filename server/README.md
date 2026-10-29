@@ -16,6 +16,8 @@ npm install
 
 Configure the existing `.env` file with either all of `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`, or a `DATABASE_URL` PostgreSQL connection string. When all five `PG*` settings are present, they take precedence over `DATABASE_URL`. The `.env` file is ignored by Git and must not be committed.
 
+The server creates the required tables and inserts the initial coffee menu and options on startup. Existing menu stock and orders are preserved across restarts.
+
 ## Run
 
 ```powershell
@@ -28,6 +30,16 @@ The server listens on port `3000` by default. Set `PORT` or the comma-separated 
 
 - `GET /api/health` checks that the HTTP API is running.
 - `GET /api/health/db` checks the PostgreSQL connection and returns `503` if the database is unavailable.
+
+## API
+
+- `GET /api/menus` returns available menus and options.
+- `POST /api/orders` creates an order. Send an `Idempotency-Key` header to safely retry a submission.
+- `GET /api/orders/:orderId` returns an order snapshot.
+- `GET /api/admin/menus` and `PATCH /api/admin/menus/:menuId/stock` read and adjust stock.
+- `GET /api/admin/orders` and `PATCH /api/admin/orders/:orderId/status` manage orders.
+
+The Vite development server proxies `/api` to `http://localhost:3000`.
 
 ## Tests
 
